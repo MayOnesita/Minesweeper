@@ -10,19 +10,20 @@ local sup_bar_color = {0.3647,0.2509,0.2156,0.7}
 local widget = require( "widget" )
 
 -----------------------------------------------------------------------------------------
+-- Main variables
+local grid = {} -- 2D array to hold our grid
+local gridRows = 10 
+local gridColumns = 10
+local cellSize = 30 
+local nBombs = 15
 
 -- Screen Variables
 local screenW, screenH, halfW = display.actualContentWidth, display.actualContentHeight, display.contentCenterX
+local supbarHeight = screenH/4 -- height of the supbar
+local gridWidth = cellSize * gridColumns -- total width of the grid
+local xOffset = (screenW - gridWidth) / 2 --+ screenW/64 -- horizontal offset to center the grid
 
--- Main variables
-local grid = {} -- 2D array to hold our grid
-local cellSize = 30 
-local gridRows = 10 
-local gridColumns = 10
-
-local nBombs = 15
-
--- Function to create the game grid, 2D array to represent mathematically the grid
+-- Function to create the game grid in arrays rep
 local function createGameGrid()
     local gameGrid = {} 
     for i = 1, gridRows do
@@ -45,7 +46,7 @@ local function setMines(gameGrid, nBombs)
 	end
 end
 
--- function that returns 1 if there is a mine in grid[i][j], 0 otherwise
+-- function that returns 1 if there is a mine in grid[i][j], 0 otherwise (addition for numbers in arrays)
 local function isMine(gameGrid, i, j)
 	if i >= 1 and i <= gridRows and j >= 1 and j <= gridColumns then
 		if gameGrid[i][j] == -1 then
@@ -75,7 +76,7 @@ local function fillGrid(gameGrid)
     end
 end
 
--- CREATE THE GAME GRID
+-- CREATE THE GAME GRID (principal)
 local gameGrid = createGameGrid()
 setMines(gameGrid, nBombs)
 fillGrid(gameGrid)
@@ -104,9 +105,7 @@ end
 
 -- Create the VISUAL grid
 local function createGrid(sceneGroup)
-    local supbarHeight = screenH/4 -- height of the supbar
-    local gridWidth = cellSize * gridColumns -- total width of the grid
-    local xOffset = (screenW - gridWidth) / 2 + 14 -- horizontal offset to center the grid
+    
     for i = 1, gridRows do
         grid[i] = {} -- create a new row
         for j = 1, gridColumns do
@@ -146,7 +145,6 @@ local function createGrid(sceneGroup)
 				return true
 			end
 			imageCell:addEventListener("touch", imageCell)
-
 
             grid[i][j] = {cell = cell, imageCell = imageCell} -- add the cells to the grid
         end
