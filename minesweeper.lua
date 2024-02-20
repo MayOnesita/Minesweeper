@@ -20,7 +20,7 @@ local cellSize = 30
 local gridRows = 10 
 local gridColumns = 10
 
-local nBombs = 10
+local nBombs = 15
 
 -- Function to create the game grid, 2D array to represent mathematically the grid
 local function createGameGrid()
@@ -28,79 +28,81 @@ local function createGameGrid()
     for i = 1, gridRows do
         gameGrid[i] = {} 
         for j = 1, gridColumns do
-            gameGrid[i][j] = -1 
+            gameGrid[i][j] = 0 
         end
     end
     return gameGrid
 end
 
 -- Function to set random bombs in the grid
-local function setBombs(gameGrid, nBombs)
+local function setMines(gameGrid, nBombs)
 	local bombs = 0
 	while bombs < nBombs do
 		local i = math.random(gridRows)
 		local j = math.random(gridColumns)
-		gameGrid[i][j] = 0
+		gameGrid[i][j] = -1
 		bombs = bombs + 1
 	end
 end
 
--- Function to fill the grid with the number of bombs around each cell
-local function fillGrid(gameGrid)
-	for i = 1, gridRows do
-		for j = 1, gridColumns do
-			if gameGrid[i][j] == 0 then
-				if i > 1 then
-					if gameGrid[i-1][j] ~= 0 then
-						gameGrid[i-1][j] = gameGrid[i-1][j] + 1
-					end
-					if j > 1 then
-						if gameGrid[i-1][j-1] ~= 0 then
-							gameGrid[i-1][j-1] = gameGrid[i-1][j-1] + 1
-						end
-					end
-					if j < gridColumns then
-						if gameGrid[i-1][j+1] ~= 0 then
-							gameGrid[i-1][j+1] = gameGrid[i-1][j+1] + 1
-						end
-					end
-				end
-				if i < gridRows then
-					if gameGrid[i+1][j] ~= 0 then
-						gameGrid[i+1][j] = gameGrid[i+1][j] + 1
-					end
-					if j > 1 then
-						if gameGrid[i+1][j-1] ~= 0 then
-							gameGrid[i+1][j-1] = gameGrid[i+1][j-1] + 1
-						end
-					end
-					if j < gridColumns then
-						if gameGrid[i+1][j+1] ~= 0 then
-							gameGrid[i+1][j+1] = gameGrid[i+1][j+1] + 1
-						end
-					end
-				end
-				if j > 1 then
-					if gameGrid[i][j-1] ~= 0 then
-						gameGrid[i][j-1] = gameGrid[i][j-1] + 1
-					end
-				end
-				if j < gridColumns then
-					if gameGrid[i][j+1] ~= 0 then
-						gameGrid[i][j+1] = gameGrid[i][j+1] + 1
-					end
-				end
-			end
+-- function that returns 1 if there is a mine in grid[i][j], 0 otherwise
+local function isMine(gameGrid, i, j)
+	if i >= 1 and i <= gridRows and j >= 1 and j <= gridColumns then
+		if gameGrid[i][j] == -1 then
+			return 1
 		end
 	end
+	return 0
 end
 
--- Now you can create the game grid by calling the function
-local gameGrid = createGameGrid()
-setBombs(gameGrid, nBombs)
---fillGrid(gameGrid)
+-- Function to fill the grid with the number of bombs around each cell
+local function fillGrid(gameGrid)
+    for i = 1, gridRows do
+        for j = 1, gridColumns do
+			if gameGrid[i][j] == 0 then
+				local count = 0
+				count = count + isMine(gameGrid, i - 1, j - 1)
+				count = count + isMine(gameGrid, i - 1, j)
+				count = count + isMine(gameGrid, i - 1, j + 1)
+				count = count + isMine(gameGrid, i, j - 1)
+				count = count + isMine(gameGrid, i, j + 1)
+				count = count + isMine(gameGrid, i + 1, j - 1)
+				count = count + isMine(gameGrid, i + 1, j)
+				count = count + isMine(gameGrid, i + 1, j + 1)
+				gameGrid[i][j] = count
+			end
+        end
+    end
+end
 
--- Add this function to create the grid
+-- CREATE THE GAME GRID
+local gameGrid = createGameGrid()
+setMines(gameGrid, nBombs)
+fillGrid(gameGrid)
+
+-- Recursive function to reveal adjacent cells
+local function revealAdjacentCells(i, j)
+    -- Check if the cell is within the grid and has not been revealed yet
+    if i >= 1 and i <= gridRows and j >= 1 and j <= gridColumns and grid[i][j].imageCell ~= nil then
+        -- Reveal the cell
+        grid[i][j].imageCell:removeSelf()
+        grid[i][j].imageCell = nil
+
+        -- If the cell's value is 0, reveal its adjacent cells
+        if gameGrid[i][j] == 0 then
+            revealAdjacentCells(i - 1, j - 1)
+            revealAdjacentCells(i - 1, j)
+            revealAdjacentCells(i - 1, j + 1)
+            revealAdjacentCells(i, j - 1)
+            revealAdjacentCells(i, j + 1)
+            revealAdjacentCells(i + 1, j - 1)
+            revealAdjacentCells(i + 1, j)
+            revealAdjacentCells(i + 1, j + 1)
+        end
+    end
+end
+
+-- Create the VISUAL grid
 local function createGrid(sceneGroup)
     local supbarHeight = screenH/4 -- height of the supbar
     local gridWidth = cellSize * gridColumns -- total width of the grid
@@ -116,16 +118,16 @@ local function createGrid(sceneGroup)
             sceneGroup:insert(cell)
 
             -- add the images and numbers based on the gameGrid values
-            if gameGrid[i][j] == 0 then
-                local mine = display.newImageRect(resources_folder.."mine.png", cellSize, cellSize)
+			if gameGrid[i][j] < 0 then
+				local mine = display.newImageRect(resources_folder.."mine.png", cellSize, cellSize)
                 mine.x = xOffset + (j - 1) * cellSize
                 mine.y = supbarHeight + (i - 1) * cellSize
                 sceneGroup:insert(mine)
-            elseif gameGrid[i][j] > 0 then
-                local number = display.newText(gameGrid[i][j], xOffset + (j - 1) * cellSize, supbarHeight + (i - 1) * cellSize, native.systemFont, 16)
-                number:setFillColor(0, 0, 0)
-                sceneGroup:insert(number)
-            end
+			elseif gameGrid[i][j] > 0 then
+				local number = display.newText(gameGrid[i][j], xOffset + (j - 1) * cellSize, supbarHeight + (i - 1) * cellSize, native.systemFont, 16)
+				number:setFillColor(0, 0, 0)
+				sceneGroup:insert(number)
+			end
 
             -- create a new cell for the image
             local imageCell = display.newImageRect(resources_folder.."cell.jpg", cellSize, cellSize)
@@ -133,15 +135,18 @@ local function createGrid(sceneGroup)
             imageCell.y = supbarHeight + (i - 1) * cellSize
             sceneGroup:insert(imageCell) -- add the image of the cell
 
-            -- add a touch event listener to the image cell
-            function imageCell:touch(event)
-                if event.phase == "began" then
-                    self:removeSelf() -- remove the image cell when it's clicked
-                    self = nil
-                end
-                return true
-            end
-            imageCell:addEventListener("touch", imageCell)
+                -- add a touch event listener to the image cell
+			function imageCell:touch(event)
+				if event.phase == "began" then
+					self:removeSelf() -- remove the image cell when it's clicked
+					self = nil
+					-- Call the revealAdjacentCells function when a cell is clicked
+					revealAdjacentCells(i, j)
+				end
+				return true
+			end
+			imageCell:addEventListener("touch", imageCell)
+
 
             grid[i][j] = {cell = cell, imageCell = imageCell} -- add the cells to the grid
         end
