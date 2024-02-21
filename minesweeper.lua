@@ -125,19 +125,46 @@ end
 -- BUTTONS and WIDGETS
 ------------------------------
 
+-- Function to create the home button
+local function onHometBtnRelease(sceneGroup)
+	composer.gotoScene( "menu", "fade", 500 )
+	
+	return true	-- indicates successful touch
+end
+
+local function createHomeButton(sceneGroup)
+    homeButton = widget.newButton{
+        defaultFile = resources_folder.."home_btn.png",
+        overFile = resources_folder.."home_btn_over.png",
+        width = 40, height = 40,
+        onEvent = function(event)
+            if event.phase == "ended" then
+                onHometBtnRelease(sceneGroup)
+            end
+        end,
+        emboss = false,
+    }
+    homeButton.x = display.contentCenterX + screenW/2.5
+    homeButton.y = display.contentCenterY - screenH/2.2
+
+    sceneGroup:insert(homeButton)
+end
+
 -- Flag mode
 local flagMode = false
 local flagButton
 local is_first_time = true
 local off_layer
 
-local function toggleFlagMode(first_off_layer)
+local function toggleFlagMode(first_off_layer, sceneGroup)
     flagMode = not flagMode
     -- Check if flagButton is not nil before using it
     if flagButton then
         off_layer = display.newImageRect( resources_folder.."flag_btn_off_layer.png", 60, 60 )
         off_layer.x = display.contentCenterX 
         off_layer.y = display.contentCenterY - screenH/2.8
+
+        sceneGroup:insert(off_layer)
 
         if flagMode then
             off_layer:removeSelf()   
@@ -158,14 +185,12 @@ local function createFlagButton(sceneGroup)
     first_off_layer.y = display.contentCenterY - screenH/2.8
 
     flagButton = widget.newButton({
-        --label = "Flag Mode",
-        --labelColor = { default={ 1.0 }, over={ 0.5 } },
         defaultFile = resources_folder.."flag_btn.png",
         overFile = resources_folder.."flag_btn_over.png",
         width = 60, height = 60,
         onEvent = function(event)
             if event.phase == "ended" then
-                toggleFlagMode(first_off_layer)
+                toggleFlagMode(first_off_layer, sceneGroup)
             end
         end,
         emboss = false,
@@ -226,9 +251,9 @@ end
 
 -- Chronometer 
 local function createChronometer(sceneGroup)
-	local clock = display.newImageRect( resources_folder.."chronometer.png", screenH/5+20, screenH/5)
+	local clock = display.newImageRect( resources_folder.."chronometer.png", screenH/(6.5)+20, screenH/6.5)
 	clock.x = display.contentCenterX - (screenW/4)
-	clock.y = display.contentCenterY - (screenH/2.99)
+	clock.y = display.contentCenterY - (screenH/2.93)
 
 	local start_time = os.time()  -- Obtiene el tiempo de inicio en segundos
 
@@ -331,6 +356,7 @@ function scene:create( event )
     createGrid(sceneGroup)
 	createChronometer(sceneGroup)
 	createFlagButton(sceneGroup)
+    createHomeButton(sceneGroup)
 end
 
 function scene:show( event )
@@ -360,6 +386,19 @@ end
 
 function scene:destroy( event )
 	local sceneGroup = self.view
+
+    if homeButton then
+		homeButton:removeSelf()
+		homeButton = nil
+	end
+    if flagButton then
+		flagButton:removeSelf()
+		flagButton = nil
+	end
+    if flagButton then
+		flagButton:removeSelf()
+		flagButton = nil
+	end
 end
 
 ---------------------------------------------------------------------------------
