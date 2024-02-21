@@ -22,6 +22,7 @@ local gridRows = 10
 local gridColumns = 10
 local cellSize = 30 
 local nBombs = 25
+local win_cells = (gridRows * gridColumns) - nBombs
 
 -- Screen Variables
 local screenW, screenH, halfW = display.actualContentWidth, display.actualContentHeight, display.contentCenterX
@@ -273,6 +274,54 @@ local function createChronometer(sceneGroup)
     Runtime:addEventListener("enterFrame", updateChronometer)
 	sceneGroup:insert(clock)
 	sceneGroup:insert(chronometer_text)
+end
+
+local function restartGame()
+    -- Aquí colocas el código para reiniciar el juego, reiniciando todas las variables y estados de la escena
+end
+
+local function showPopUp(message)
+    local popupOptions = {
+        isModal = true,
+        effect = "fade",
+        time = 400,
+    }
+
+    local popup = display.newGroup()
+    local popupBackground = display.newRect(display.contentCenterX, display.contentCenterY, display.actualContentWidth * 0.8, display.actualContentHeight * 0.3)
+    popupBackground:setFillColor(0.5, 0.5, 0.5)
+    popup:insert(popupBackground)
+
+    local message_on_pu = display.newText({
+        text = message,
+        x = display.contentCenterX,
+        y = display.contentCenterY - 20,
+        width = popupBackground.width * 0.8,
+        font = native.systemFont,
+        fontSize = 16
+    })
+
+    popup:insert(message_on_pu)
+
+    local retry_btn = widget.newButton({
+        label = "Play again",
+        onRelease = function()
+            restartGame()
+            popup:removeSelf()
+        end,
+        emboss = false,
+        shape = "rectangle",
+        width = 200,
+        height = 40,
+        fontSize = 16,
+        fillColor = { default={1,1,1}, over={0.5,0.5,0.5} },
+        labelColor = { default={0,0,0} }
+    })
+    retry_btn.x = display.contentCenterX
+    retry_btn.y = display.contentCenterY
+    popup:insert(retry_btn)
+
+    popup:toFront()
 end
 
 
