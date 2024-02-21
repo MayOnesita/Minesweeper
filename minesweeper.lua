@@ -127,41 +127,54 @@ end
 
 -- Flag mode
 local flagMode = false
-local function toggleFlagMode()
-    flagMode = not flagMode
-end
-
--- Define flagButton at a higher scope
 local flagButton
+local is_first_time = true
+local off_layer
 
-local function toggleFlagMode()
+local function toggleFlagMode(first_off_layer)
     flagMode = not flagMode
     -- Check if flagButton is not nil before using it
     if flagButton then
+        off_layer = display.newImageRect( resources_folder.."flag_btn_off_layer.png", 60, 60 )
+        off_layer.x = display.contentCenterX 
+        off_layer.y = display.contentCenterY - screenH/2.8
+
         if flagMode then
-            flagButton:setLabel("Shovel Mode")
-        else 
-            flagButton:setLabel("Flag Mode")
+            off_layer:removeSelf()   
+
+            if is_first_time then
+                first_off_layer:removeSelf()
+                is_first_time = false
+            end         
         end
     end
 end
 
 -- Function to create the flag button
 local function createFlagButton(sceneGroup)
+
+    first_off_layer = display.newImageRect( resources_folder.."flag_btn_off_layer.png", 60, 60 )
+    first_off_layer.x = display.contentCenterX
+    first_off_layer.y = display.contentCenterY - screenH/2.8
+
     flagButton = widget.newButton({
-        label = "Flag Mode",
-        labelColor = { default={ 1.0 }, over={ 0.5 } },
-        defaultFile = resources_folder.."button.png",
-        overFile = resources_folder.."button-over.png",
-        width = 154, height = 40,
+        --label = "Flag Mode",
+        --labelColor = { default={ 1.0 }, over={ 0.5 } },
+        defaultFile = resources_folder.."flag_btn.png",
+        overFile = resources_folder.."flag_btn_over.png",
+        width = 60, height = 60,
         onEvent = function(event)
             if event.phase == "ended" then
-                toggleFlagMode()
+                toggleFlagMode(first_off_layer)
             end
         end,
         emboss = false,
     })
+    flagButton.x = display.contentCenterX
+    flagButton.y = display.contentCenterY - screenH/2.8
+
     sceneGroup:insert(flagButton)
+    sceneGroup:insert(first_off_layer)
 end
 --[[
 -- Define startBtn at a higher scope
@@ -312,7 +325,7 @@ function scene:create( event )
     game_supbar.anchorX = 0
     game_supbar.anchorY = 0
     game_supbar:setFillColor(unpack(sup_bar_color))
-    
+
 	sceneGroup:insert( background )
     sceneGroup:insert( game_supbar )
     createGrid(sceneGroup)
