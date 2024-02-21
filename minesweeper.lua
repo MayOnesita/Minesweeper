@@ -15,13 +15,13 @@ local grid = {} -- 2D array to hold our grid
 local gridRows = 10 
 local gridColumns = 10
 local cellSize = 30 
-local nBombs = 15
+local nBombs = 25
 
 -- Screen Variables
 local screenW, screenH, halfW = display.actualContentWidth, display.actualContentHeight, display.contentCenterX
 local supbarHeight = screenH/4 -- height of the supbar
 local gridWidth = cellSize * gridColumns -- total width of the grid
-local xOffset = (screenW - gridWidth) / 2 --+ screenW/64 -- horizontal offset to center the grid
+local xOffset = halfW/6.5 -- horizontal offset to center the grid
 
 -- Function to create the game grid in arrays rep
 local function createGameGrid()
@@ -105,15 +105,15 @@ end
 
 -- Create the VISUAL grid
 local function createGrid(sceneGroup)
-    
     for i = 1, gridRows do
         grid[i] = {} -- create a new row
         for j = 1, gridColumns do
             -- create a new cell for the background color
-            local cell = display.newRect(xOffset + (j - 1) * cellSize, supbarHeight + (i - 1) * cellSize, cellSize, cellSize)
-            cell:setFillColor(0.7) 
+            local cell = display.newImageRect( resources_folder.."back_cell.jpg", cellSize, cellSize ) 
+			cell.x = xOffset + (j - 1) * cellSize
+            cell.y = supbarHeight + (i - 1) * cellSize
             cell.strokeWidth = 1 
-            cell:setStrokeColor(1, 1, 1)
+            cell:setStrokeColor(0.7, 0.7, 0.7, 0.4)
             sceneGroup:insert(cell)
 
             -- add the images and numbers based on the gameGrid values
@@ -124,7 +124,7 @@ local function createGrid(sceneGroup)
                 sceneGroup:insert(mine)
 			elseif gameGrid[i][j] > 0 then
 				local number = display.newText(gameGrid[i][j], xOffset + (j - 1) * cellSize, supbarHeight + (i - 1) * cellSize, native.systemFont, 16)
-				number:setFillColor(0, 0, 0)
+				number:setFillColor(1, 1, 1)
 				sceneGroup:insert(number)
 			end
 
@@ -151,18 +151,34 @@ local function createGrid(sceneGroup)
     end
 end
 
-local function createCronometer(sceneGroup)
-	local clock = display.newImageRect( resources_folder.."cronometer.png", screenH/5+20, screenH/5)
+local function createChronometer(sceneGroup)
+	local clock = display.newImageRect( resources_folder.."chronometer.png", screenH/5+20, screenH/5)
 	clock.x = display.contentCenterX - (screenW/4)
-	clock.y = display.contentCenterY - (screenH/3)
+	clock.y = display.contentCenterY - (screenH/2.99)
 
+	local start_time = os.time()  -- Obtiene el tiempo de inicio en segundos
 
+    local chronometer_text = display.newText("00   00", display.contentCenterX - screenW/4, display.contentCenterY - screenH/2.81, native.systemFont, 20)
+	chronometer_text:setFillColor(0.9921,0.8470,0.2078)
+
+	local function updateChronometer()
+		local past_time = os.difftime(os.time(), start_time)  
+		local min = math.floor(past_time / 60)
+		local segs = past_time % 60
+	
+		local time_format = string.format("%02d   %02d", min, segs)
+	
+		chronometer_text.text = time_format
+	end
+    -- Actualiza el cronómetro en cada cuadro de animación
+    Runtime:addEventListener("enterFrame", updateChronometer)
 	sceneGroup:insert(clock)
+	sceneGroup:insert(chronometer_text)
 end
 
 function scene:create( event )
     local sceneGroup = self.view
-    local background = display.newImageRect(resources_folder.."game_bg.png", screenH+200, screenH)
+    local background = display.newImageRect(resources_folder.."game_bg.jpg", screenH+200, screenH)
     background.anchorX = 0.5
     background.anchorY = 0.5
     background.x = display.contentCenterX
@@ -175,7 +191,7 @@ function scene:create( event )
 	sceneGroup:insert( background )
     sceneGroup:insert( game_supbar )
     createGrid(sceneGroup)
-	createCronometer(sceneGroup)
+	createChronometer(sceneGroup)
 end
 
 function scene:show( event )
