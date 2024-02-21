@@ -155,43 +155,31 @@ end
 local flagMode = false
 local flagButton
 local is_first_time = true
-local off_layer
 
-local function toggleFlagMode(first_off_layer, sceneGroup)
+local function toggleFlagMode()
     flagMode = not flagMode
     -- Check if flagButton is not nil before using it
     if flagButton then
-        off_layer = display.newImageRect( resources_folder.."flag_btn_off_layer.png", 60, 60 )
-        off_layer.x = display.contentCenterX 
-        off_layer.y = display.contentCenterY - screenH/2.8
-
-        sceneGroup:insert(off_layer)
-
         if flagMode then
-            off_layer:removeSelf()   
-
-            if is_first_time then
-                first_off_layer:removeSelf()
-                is_first_time = false
-            end         
+            flagButton:setLabel("")
+        else 
+            flagButton:setLabel("X")
         end
     end
 end
 
 -- Function to create the flag button
 local function createFlagButton(sceneGroup)
-
-    first_off_layer = display.newImageRect( resources_folder.."flag_btn_off_layer.png", 60, 60 )
-    first_off_layer.x = display.contentCenterX
-    first_off_layer.y = display.contentCenterY - screenH/2.8
-
     flagButton = widget.newButton({
+        label = "X",
+        labelColor = { default={ 0 }, over={ 0.5 } },
+        fontSize = 47,
         defaultFile = resources_folder.."flag_btn.png",
         overFile = resources_folder.."flag_btn_over.png",
         width = 60, height = 60,
         onEvent = function(event)
             if event.phase == "ended" then
-                toggleFlagMode(first_off_layer, sceneGroup)
+                toggleFlagMode()
             end
         end,
         emboss = false,
@@ -200,7 +188,6 @@ local function createFlagButton(sceneGroup)
     flagButton.y = display.contentCenterY - screenH/2.8
 
     sceneGroup:insert(flagButton)
-    sceneGroup:insert(first_off_layer)
 end
 --[[
 -- Define startBtn at a higher scope
