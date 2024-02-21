@@ -15,17 +15,18 @@ local widget = require "widget"
 
 -- forward declarations and other locals
 local startBtn
+local sound = audio.loadStream(resources_folder.."sad_trumpet.mp3")
 
 -- 'onRelease' event listener for startBtn
 local function onStartBtnRelease()
-	
-	-- go to minesweeper.lua scene
 	composer.gotoScene( "minesweeper", "slideUp", 500 )
 	return true	-- indicates successful touch
 end
 
 function scene:create( event )
 	local sceneGroup = self.view
+
+	audio.setVolume( 0.02 )
 
 	-- display a background image
 	local background = display.newImageRect(resources_folder.."menu_bg.png", display.actualContentHeight, display.actualContentHeight)
@@ -56,25 +57,29 @@ function scene:create( event )
 end
 
 function scene:show( event )
-	local sceneGroup = self.view
-	local phase = event.phase
-	if phase == "will" then
-	elseif phase == "did" then
-	end	
+    local sceneGroup = self.view
+    local phase = event.phase
+    if phase == "will" then
+        audio.play(sound, { loops = -1 })
+    elseif phase == "did" then
+		audio.play(sound, { loops = -1 })
+    end    
 end
 
 function scene:hide( event )
-	local sceneGroup = self.view
-	local phase = event.phase
-	if event.phase == "will" then
-	elseif phase == "did" then
-	end	
+    local sceneGroup = self.view
+    local phase = event.phase
+    if event.phase == "will" then
+        -- Stop the sound
+        audio.stop()
+    elseif phase == "did" then
+    end    
 end
 
 function scene:destroy( event )
 	local sceneGroup = self.view
 	if startBtn then
-		startBtn:removeSelf()	-- widgets must be manually removed
+		startBtn:removeSelf()
 		startBtn = nil
 	end
 end

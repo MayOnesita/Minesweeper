@@ -23,7 +23,12 @@ local nBombs = 15
 local screenW, screenH, halfW = display.actualContentWidth, display.actualContentHeight, display.contentCenterX
 local supbarHeight = screenH/4 
 local gridWidth = cellSize * gridColumns 
-local xOffset = halfW/6.5 
+local xOffset = halfW/6.5 -- horizontal offset to center the grid
+
+-- Sound
+local sound = audio.loadStream(resources_folder.."clock.mp3")
+local explosionSound = audio.loadSound(resources_folder.."explote.mp3")
+local winSound = audio.loadSound(resources_folder.."win.mp3")
 
 ------------------------------
 -- BACK-END  
@@ -97,9 +102,11 @@ fillGrid(gameGrid)
 local function restartGame(sceneGroup)
     composer.removeScene("minesweeper")
     composer.gotoScene("minesweeper")
+    audio.stop()
 end
 
 local function showPopUp(message)
+    audio.stop()
     local popup = display.newGroup()
     local popupBackground = display.newImageRect( resources_folder.."popup_bg.png", display.actualContentWidth * 0.8, display.actualContentHeight * 0.4 ) 
     popupBackground.x = display.contentCenterX
@@ -162,6 +169,7 @@ local function revealAdjacentCells(i, j, sceneGroup)
         if gameGrid[i][j] < 0 then
             showMines(grid, sceneGroup)
             showPopUp("You lost")
+            audio.play(explosionSound)
         end
         if gameGrid[i][j] == 0 then
             revealAdjacentCells(i - 1, j - 1)
@@ -217,6 +225,7 @@ end
 local function onHometBtnRelease(sceneGroup)
     composer.removeScene("minesweeper")
 	composer.gotoScene( "menu", "slideDown", 500 )
+    audio.stop()
 end
 local function createHomeButton(sceneGroup)
     homeButton = widget.newButton{
@@ -230,8 +239,8 @@ local function createHomeButton(sceneGroup)
         end,
         emboss = false,
     }
-    homeButton.x = display.contentCenterX + screenW/3.6
-    homeButton.y = display.contentCenterY - screenH/2.83
+    homeButton.x = display.contentCenterX + screenW/2.5
+    homeButton.y = display.contentCenterY - screenH/2.2
     sceneGroup:insert(homeButton)
 end
 
@@ -279,7 +288,7 @@ local function createFlagButton(sceneGroup)
         emboss = false,
     })
     flagButton.x = display.contentCenterX
-    flagButton.y = display.contentCenterY - screenH/2.85
+    flagButton.y = display.contentCenterY - screenH/2.8
 
     sceneGroup:insert(flagButton)
 end
@@ -330,10 +339,10 @@ local function createGrid(sceneGroup)
 				sceneGroup:insert(number)
 			end
             local imageCell = display.newImageRect(resources_folder.."cell.jpg", cellSize, cellSize)
+    
             imageCell.x = xOffset + (j - 1) * cellSize
             imageCell.y = supbarHeight + (i - 1) * cellSize
             sceneGroup:insert(imageCell)
-		
 			function imageCell:touch(event)
                 nFlags = countFlags()
                 print(nFlags)
@@ -342,6 +351,7 @@ local function createGrid(sceneGroup)
                 if areFlagsCorrect then
                     showMines(grid, sceneGroup)
                     showPopUp("You won")
+                    audio.play(winSound)
                 end
                 if event.phase == "began" then
                     if flagMode then
@@ -355,7 +365,7 @@ local function createGrid(sceneGroup)
                             sceneGroup:insert(flag)
                             grid[i][j].flag = flag
                         end
-                    else
+                    else 
                         if grid[i][j].flag then
                             grid[i][j].flag:removeSelf()
                             grid[i][j].flag = nil
@@ -374,6 +384,9 @@ end
 
 function scene:create( event )
     local sceneGroup = self.view
+
+    audio.setVolume( 0.05 )
+
     local background = display.newImageRect(resources_folder.."game_bg.jpg", screenH+200, screenH)
     background.anchorX = 0.5
     background.anchorY = 0.5
@@ -396,7 +409,43 @@ function scene:create( event )
 	createChronometer(sceneGroup)
 	createFlagButton(sceneGroup)
     createHomeButton(sceneGroup)
+
 end
 
+function scene:show( event )
+    local sceneGroup = self.view
+    local phase = event.phase
+    if phase == "will" then
+        audio.play(sound, { loops = -1 })
+    elseif phase == "did" then
+    end    
+end
+
+function scene:hide( event )
+    local sceneGroup = self.view
+    local phase = event.phase
+    if event.phase == "will" then
+        audio.stop()
+    elseif phase == "did" then
+    end    
+end
+
+function scene:destroy( event )
+	local sceneGroup = self.view
+	if startBtn then
+		startBtn:removeSelf()
+		startBtn = nil
+	end
+end
+
+---------------------------------------------------------------------------------
+
+-- Listener setup
 scene:addEventListener( "create", scene )
+scene:addEventListener( "show", scene )
+scene:addEventListener( "hide", scene )
+scene:addEventListener( "destroy", scene )
+
+-----------------------------------------------------------------------------------------
+
 return scene
